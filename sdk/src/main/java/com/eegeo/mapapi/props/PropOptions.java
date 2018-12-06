@@ -107,6 +107,12 @@ public final class PropOptions {
         return this;
     }
 
+    /**
+     * Sets the name to be assigned to the prop created with these parameters, this should be unique.
+     *
+     * @param name the name to be assigned to the prop
+     * @return The PropOptions object on which the method was called, with the new name set.
+     */
     public PropOptions name(String name) {
         m_name = name;
         return this;
@@ -148,6 +154,11 @@ public final class PropOptions {
         return m_indoorFloorId;
     }
 
+    /**
+     * Returns the name which the created prop will be assigned, this should be unique.
+     *
+     * @return The name that will be assigned to the created prop.
+     */
     public String getName() {
         return m_name;
     }

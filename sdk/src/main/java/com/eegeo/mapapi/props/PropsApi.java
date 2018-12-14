@@ -44,8 +44,8 @@ public class PropsApi {
                 propOptions.getIndoorMapId(),
                 propOptions.getIndoorFloorId(),
                 propOptions.getName(),
-                propOptions.getLocation().latitude,
-                propOptions.getLocation().longitude,
+                propOptions.getPosition().latitude,
+                propOptions.getPosition().longitude,
                 propOptions.getElevation(),
                 propOptions.getElevationMode().ordinal(),
                 propOptions.getHeadingDegrees(),
@@ -66,11 +66,11 @@ public class PropsApi {
     }
 
     @WorkerThread
-    public void setLocation(int nativeHandle, Prop.AllowHandleAccess allowHandleAccess, LatLng location) {
+    public void setPosition(int nativeHandle, Prop.AllowHandleAccess allowHandleAccess, LatLng position) {
         if (allowHandleAccess == null)
             throw new NullPointerException("Null access token. Method is intended for internal use by Prop");
 
-        nativeSetLocation(m_jniEegeoMapApiPtr, nativeHandle, location.latitude, location.longitude);
+        nativeSetLocation(m_jniEegeoMapApiPtr, nativeHandle, position.latitude, position.longitude);
     }
 
     @WorkerThread

@@ -18,7 +18,7 @@ public class Prop extends NativeApiObject {
     private int m_indoorFloorId;
     private double m_elevation;
     private ElevationMode m_elevationMode;
-    private LatLng m_location;
+    private LatLng m_position;
     private double m_headingDegrees;
     private String m_geometryId;
 
@@ -44,7 +44,7 @@ public class Prop extends NativeApiObject {
         m_indoorFloorId = propOptions.getIndoorFloorId();
         m_elevation = propOptions.getElevation();
         m_elevationMode = propOptions.getElevationMode();
-        m_location = propOptions.getLocation();
+        m_position = propOptions.getPosition();
         m_headingDegrees = propOptions.getHeadingDegrees();
         m_geometryId = propOptions.getGeometryId();
 
@@ -145,30 +145,29 @@ public class Prop extends NativeApiObject {
     }
 
     /**
-     * Gets the heading of the prop, in degrees, clockwise from North (0 degrees).
+     * Gets the position at which the prop will be rendered.
      *
-     * @return The heading of this prop in degrees.
+     * @return The position of the prop as a LatLng.
      */
     @UiThread
-    public LatLng getLocation() {
-        return m_location;
+    public LatLng getPosition() {
+        return m_position;
     }
 
     /**
-     * Sets the heading of the prop, in degrees, clockwise from North (0 degrees).
+     * Sets the position at which the prop will be rendered.
      *
-     * @param location The heading of this prop in degrees.
+     * @param position The location of the prop as a LatLng.
      */
     @UiThread
-    public void setLocation(LatLng location) {
-        m_location = location;
-        updateNativeLocation();
+    public void setPosition(LatLng position) {
+        m_position = position;
+        updateNativePosition();
     }
 
     /**
-     * Gets the heading of the prop, in degrees, clockwise from North (0 degrees).
-     *
-     * @return The heading of this prop in degrees.
+     * Gets the id of the geometry to be rendered in the location specified by the prop.
+     * @return The id of the 3d geometry to be displayed.
      */
     @UiThread
     public String getGeometryId() {
@@ -176,9 +175,9 @@ public class Prop extends NativeApiObject {
     }
 
     /**
-     * Sets the heading of the prop, in degrees, clockwise from North (0 degrees).
+     * Sets the id of the geometry to be rendered in the location specified by the prop.
      *
-     * @param geometryId The heading of this prop in degrees.
+     * @param geometryId The id of the 3d geometry to be displayed.
      */
     @UiThread
     public void setGeometryId(String geometryId) {
@@ -204,16 +203,16 @@ public class Prop extends NativeApiObject {
     }
 
     @UiThread
-    private void updateNativeLocation() {
-        final LatLng location = m_location;
+    private void updateNativePosition() {
+        final LatLng position = m_position;
 
         submit(new Runnable() {
             @WorkerThread
             public void run() {
-                m_propsApi.setLocation(
+                m_propsApi.setPosition(
                         getNativeHandle(),
                         Prop.m_allowHandleAccess,
-                        location);
+                        position);
             }
         });
     }

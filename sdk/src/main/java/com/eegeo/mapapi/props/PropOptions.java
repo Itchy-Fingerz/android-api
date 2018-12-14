@@ -14,7 +14,7 @@ public final class PropOptions {
     private ElevationMode m_elevationMode = ElevationMode.HeightAboveGround;
     private String m_indoorMapId = "";
     private int m_indoorFloorId;
-    private LatLng m_location;
+    private LatLng m_position;
     private double m_headingDegrees;
     private String m_geometryId = "";
     private String m_name = "";
@@ -27,14 +27,14 @@ public final class PropOptions {
     }
 
     /**
-     * Set the location at which to position the prop
+     * Set the position where prop will be drawn.
      *
-     * @param location The location for the prop
-     * @return The PropOptions object on which the method was called, with the new location set.
+     * @param position The position for the prop
+     * @return The PropOptions object on which the method was called, with the new position set.
      */
     @SuppressWarnings("JavaDoc")
-    public PropOptions location(LatLng location) {
-        m_location = location;
+    public PropOptions position(LatLng position) {
+        m_position = position;
         return this;
     }
 
@@ -164,11 +164,11 @@ public final class PropOptions {
     }
 
     /**
-     * Returns the location at which the prop will be displayed.
+     * Returns the position at which the prop will be displayed.
      *
-     * @return A LatLng object representing the prop's location.
+     * @return A LatLng object representing the prop's position.
      */
-    public LatLng getLocation() { return m_location; }
+    public LatLng getPosition() { return m_position; }
 
     /**
      * Returns The heading indicating the direction in which the prop will face, in degrees,

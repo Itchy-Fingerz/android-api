@@ -157,7 +157,7 @@ public class Prop extends NativeApiObject {
     /**
      * Sets the position at which the prop will be rendered.
      *
-     * @param position The location of the prop as a LatLng.
+     * @param position The position of the prop as a LatLng.
      */
     @UiThread
     public void setPosition(LatLng position) {
@@ -167,7 +167,9 @@ public class Prop extends NativeApiObject {
 
     /**
      * Gets the id of the geometry to be rendered in the location specified by the prop.
-     * @return The id of the 3d geometry to be displayed.
+     * @return The id of the geometry to be rendered.  Available geometry is currently
+     *                   curated by WRLD, please get in touch via support@wrld3d.com to discuss
+     *                   additions.
      */
     @UiThread
     public String getGeometryId() {
@@ -175,9 +177,11 @@ public class Prop extends NativeApiObject {
     }
 
     /**
-     * Sets the id of the geometry to be rendered in the location specified by the prop.
+     * Set the id of the geometry to be rendered in the location specified by the prop.
      *
-     * @param geometryId The id of the 3d geometry to be displayed.
+     * @param geometryId The id of the geometry to be rendered.  Available geometry is currently
+     *                   curated by WRLD, please get in touch via support@wrld3d.com to discuss
+     *                   additions.
      */
     @UiThread
     public void setGeometryId(String geometryId) {

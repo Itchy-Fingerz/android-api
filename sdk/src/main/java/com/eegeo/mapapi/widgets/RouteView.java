@@ -1,9 +1,10 @@
 package com.eegeo.mapapi.widgets;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 
-import android.graphics.Color;
 import android.support.annotation.UiThread;
 
 import com.eegeo.mapapi.EegeoMap;
@@ -27,6 +28,7 @@ public class RouteView {
     private int m_forwardPathColorARGB;
     private float m_miterLimit;
 
+    private Map<Integer, List<RoutingPolylineCreateParams>> m_routeStepToPolylineCreateParams = new HashMap<>();
 
     /**
      * Create a new RouteView for the given route and options, and add it to the map.
@@ -42,7 +44,7 @@ public class RouteView {
         this.m_colorARGB = options.getColor();
         this.m_forwardPathColorARGB = options.getForwardPathColor();
         this.m_miterLimit = options.getMiterLimit();
-        addToMap();
+//        addToMap();
     }
 
 
@@ -70,16 +72,51 @@ public class RouteView {
                     RouteStep stepBefore = steps.get(i-1);
                     RouteStep stepAfter = steps.get(i+1);
 
-                    addLinesForFloorTransition(step, stepBefore, stepAfter, false);
+                    // TODO: Multi floor case is not being handleed at the moment
+                    //addLinesForFloorTransition(step, stepBefore, stepAfter, false);
+
                 }
                 else {
-                    addLinesForRouteStep(step);
+//                    addLinesForRouteStep(step);
+
+                    // TODO: verifying this logic to avoid flatten step index in this method
+                    this.addLineCreationParamsForStep(step);
                 }
             }
         }
 
+        this.refreshPolylines();
+        
         m_currentlyOnMap = true;
     }
+
+    private void addLineCreationParamsForStep(RouteStep routeStep) {
+        if(routeStep.path.size() < 2) {
+            return;
+        }
+        m_routeStepToPolylineCreateParams.put(m_routeStepToPolylineCreateParams.size(), RouteViewHelper.createLinesForRouteDirection(routeStep, m_colorARGB));
+    }
+
+    private void refreshPolylines() {
+
+        this.removeFromMap();
+        assert (m_polylines.size() == 0);
+
+        List<RoutingPolylineCreateParams> allPolylineCreateParams = new ArrayList<>();
+
+        for(int i=0; i< m_routeStepToPolylineCreateParams.size(); i++) {
+            allPolylineCreateParams.addAll(m_routeStepToPolylineCreateParams.get(i));
+        }
+
+        List<PolylineOptions> polyLineOptionsList = RouteViewAmalgamationHelper.createPolylines(allPolylineCreateParams, m_width, m_miterLimit);
+
+        for(PolylineOptions polyLineOption: polyLineOptionsList) {
+            Polyline routeLine = m_map.addPolyline(polyLineOption);
+            m_polylines.add(routeLine);
+        }
+
+    }
+
 
     private PolylineOptions basePolylineOptions(RouteStep step) {
         PolylineOptions options = new PolylineOptions()
@@ -204,7 +241,7 @@ public class RouteView {
         for (Polyline polyline: m_polylines) {
             m_map.removePolyline(polyline);
         }
-
+        m_polylines.clear();
         m_currentlyOnMap = false;
     }
 

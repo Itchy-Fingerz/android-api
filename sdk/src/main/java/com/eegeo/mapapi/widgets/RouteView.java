@@ -16,7 +16,7 @@ import com.eegeo.mapapi.services.routing.*;
 
 public class RouteView {
 
-    private static double VERTICAL_LINE_HEIGHT = 5.0;
+//    private static double VERTICAL_LINE_HEIGHT = 5.0;
 
     private EegeoMap m_map = null;
     private Route m_route = null;
@@ -44,7 +44,7 @@ public class RouteView {
         this.m_colorARGB = options.getColor();
         this.m_forwardPathColorARGB = options.getForwardPathColor();
         this.m_miterLimit = options.getMiterLimit();
-//        addToMap();
+        addToMap();
     }
 
 
@@ -52,6 +52,7 @@ public class RouteView {
      * Add this RouteView back on to the map, if it has been removed.
      */
     public void addToMap() {
+        int flattenedStepIndex = 0;
         for (RouteSection section: m_route.sections) {
             List<RouteStep> steps = section.steps;
 
@@ -72,34 +73,45 @@ public class RouteView {
                     RouteStep stepBefore = steps.get(i-1);
                     RouteStep stepAfter = steps.get(i+1);
 
-                    // TODO: Multi floor case is not being handleed at the moment
-                    //addLinesForFloorTransition(step, stepBefore, stepAfter, false);
-
+//                    addLinesForFloorTransition(step, stepBefore, stepAfter, false);
+                    addLineCreationParamsForStep(step, stepBefore.indoorFloorId, stepAfter.indoorFloorId, flattenedStepIndex, m_colorARGB);
                 }
                 else {
 //                    addLinesForRouteStep(step);
-
-                    // TODO: verifying this logic to avoid flatten step index in this method
-                    this.addLineCreationParamsForStep(step);
+                    addLineCreationParamsForStep(step, flattenedStepIndex);
                 }
+                flattenedStepIndex++;
             }
         }
 
-        this.refreshPolylines();
+        refreshPolylines();
         
         m_currentlyOnMap = true;
     }
 
-    private void addLineCreationParamsForStep(RouteStep routeStep) {
+    private void addLineCreationParamsForStep(RouteStep routeStep, int flattenedStepIndex) {
         if(routeStep.path.size() < 2) {
             return;
         }
-        m_routeStepToPolylineCreateParams.put(m_routeStepToPolylineCreateParams.size(), RouteViewHelper.createLinesForRouteDirection(routeStep, m_colorARGB));
+        m_routeStepToPolylineCreateParams.put(flattenedStepIndex, RouteViewHelper.createLinesForRouteDirection(routeStep, m_colorARGB));
+    }
+
+    private void addLineCreationParamsForStep(RouteStep routeStep, int stepBefore, int stepAfter, int flattenedStepIndex, int color) {
+        if(routeStep.path.size() < 2) {
+            return;
+        }
+        m_routeStepToPolylineCreateParams.put(flattenedStepIndex, RouteViewHelper.createLinesForFloorTransition(routeStep, stepBefore, stepAfter, color));
+    }
+
+    private void addLineCreationParamsForStep(RouteStep routeStep, int stepIndex, LatLng closestPointOnPath, int splitIndex) {
+        if(routeStep.path.size() < 2) {
+            return;
+        }
+        m_routeStepToPolylineCreateParams.put(stepIndex, RouteViewHelper.createLinesForRouteDirection(routeStep, m_forwardPathColorARGB ,m_colorARGB, splitIndex, closestPointOnPath));
     }
 
     private void refreshPolylines() {
-
-        this.removeFromMap();
+        removeFromMap();
         assert (m_polylines.size() == 0);
 
         List<RoutingPolylineCreateParams> allPolylineCreateParams = new ArrayList<>();
@@ -117,7 +129,7 @@ public class RouteView {
 
     }
 
-
+/*
     private PolylineOptions basePolylineOptions(RouteStep step) {
         PolylineOptions options = new PolylineOptions()
             .color(m_colorARGB)
@@ -162,7 +174,7 @@ public class RouteView {
         }
         return m_map.addPolyline(options);
     }
-
+*/
     /**
      * Update the progress of turn by turn navigation on route.
      *
@@ -173,10 +185,8 @@ public class RouteView {
      */
 
     public void updateRouteProgress(int sectionIndex, int stepIndex, LatLng closestPointOnRoute, int indexOfPathSegmentStartVertex) {
-        for (Polyline polyline: m_polylines) {
-            m_map.removePolyline(polyline);
-        }
-
+        removeFromMap();
+        int flattenedStepIndex = 0;
         for (int x=0; x<m_route.sections.size(); ++x) {
             List<RouteStep> steps = m_route.sections.get(x).steps;
 
@@ -194,19 +204,28 @@ public class RouteView {
                     }
                     RouteStep stepBefore = steps.get(i-1);
                     RouteStep stepAfter = steps.get(i+1);
-                    addLinesForFloorTransition(step, stepBefore, stepAfter, isActiveStep);
+
+                    if(isActiveStep) {
+                        boolean hasReachedEnd = indexOfPathSegmentStartVertex == (step.path.size()-1);
+                        addLineCreationParamsForStep(step, stepBefore.indoorFloorId, stepAfter.indoorFloorId, flattenedStepIndex, (hasReachedEnd ? m_colorARGB : m_forwardPathColorARGB));
+
+                    } else {
+                        addLineCreationParamsForStep(step, stepBefore.indoorFloorId, stepAfter.indoorFloorId, flattenedStepIndex, m_colorARGB);
+                    }
                 }
                 else {
                     if(isActiveStep) {
-                        addLinesForRouteStep(step, indexOfPathSegmentStartVertex, closestPointOnRoute);
+                        addLineCreationParamsForStep(step, flattenedStepIndex, closestPointOnRoute, indexOfPathSegmentStartVertex);
                     } else {
-                        addLinesForRouteStep(step);
+                        addLineCreationParamsForStep(step, flattenedStepIndex);
                     }
                 }
+                flattenedStepIndex++;
             }
         }
+        refreshPolylines();
     }
-
+/*
     private void addLinesForRouteStep(RouteStep step, int splitIndex, LatLng closestPointOnPath) {
         List<LatLng> backPathArray = new ArrayList<>(step.path.subList(0, splitIndex+1));
         backPathArray.add(closestPointOnPath);
@@ -233,7 +252,7 @@ public class RouteView {
             m_polylines.add(routeLine);
         }
     }
-
+*/
     /**
      * Remove this RouteView from the map.
      */

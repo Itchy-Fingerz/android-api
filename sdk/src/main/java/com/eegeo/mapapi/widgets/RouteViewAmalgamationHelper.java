@@ -72,14 +72,12 @@ public class RouteViewAmalgamationHelper {
 
 
   public static PolylineOptions createAmalgamatedPolylineForRange(List<RoutingPolylineCreateParams> polylineCreateParams, Integer rangeStartIndex, Integer rangeEndIndex, float width, float miterLimit) {
-
-
     assert (rangeStartIndex < rangeEndIndex);
     assert (rangeStartIndex >= 0);
     assert (rangeEndIndex <= polylineCreateParams.size());
 
     List<LatLng> joinedCoordinates = new ArrayList<>();
-    List<Float> joinedPerPointElevations = new ArrayList<>();
+    List<Double> joinedPerPointElevations = new ArrayList<>();
 
     boolean anyPerPointElevations = false;
 
@@ -95,7 +93,33 @@ public class RouteViewAmalgamationHelper {
     }
 
     if (anyPerPointElevations) {
-      // TODO: Case for drawing lines between multiple floors
+
+      for (int i = rangeStartIndex; i < rangeEndIndex; ++i) {
+        RoutingPolylineCreateParams params = polylineCreateParams.get(i);
+        List<Double> perPointElevations = params.perPointElevations;
+
+        if(perPointElevations == null) {
+
+          for(int x = 0; x < params.path.size(); x++) {
+            joinedPerPointElevations.add(0.0);
+          }
+
+        } else {
+          joinedPerPointElevations.addAll(params.perPointElevations);
+        }
+      }
+
+      List<Pair<LatLng, Double>>pairsList =  RouteViewHelper.removeCoincidentPointsWithElevations(joinedCoordinates, joinedPerPointElevations);
+
+      joinedCoordinates.clear();
+      joinedPerPointElevations.clear();
+
+      for(int i=0; i<pairsList.size(); i++) {
+        Pair<LatLng, Double> pair = pairsList.get(i);
+        joinedCoordinates.add(pair.first);
+        joinedPerPointElevations.add(pair.second);
+      }
+
     } else {
       joinedCoordinates = RouteViewHelper.removeCoincidentPoints(joinedCoordinates);
     }
@@ -112,8 +136,15 @@ public class RouteViewAmalgamationHelper {
       if (param.isIndoor) {
         options.indoor(param.indoorMapId, param.indoorFloorId);
       }
-      for (LatLng point : joinedCoordinates) {
-        options.add(point);
+
+      for(int i=0; i<joinedCoordinates.size(); i++) {
+        LatLng point = joinedCoordinates.get(i);
+        if(anyPerPointElevations) {
+          Double elevation = joinedPerPointElevations.get(i);
+          options.add(point, elevation);
+        } else {
+          options.add(point);
+        }
       }
 
       return options;

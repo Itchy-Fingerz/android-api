@@ -16,8 +16,6 @@ import com.eegeo.mapapi.services.routing.*;
 
 public class RouteView {
 
-//    private static double VERTICAL_LINE_HEIGHT = 5.0;
-
     private EegeoMap m_map = null;
     private Route m_route = null;
     private List<Polyline> m_polylines = new ArrayList();
@@ -73,11 +71,9 @@ public class RouteView {
                     RouteStep stepBefore = steps.get(i-1);
                     RouteStep stepAfter = steps.get(i+1);
 
-//                    addLinesForFloorTransition(step, stepBefore, stepAfter, false);
                     addLineCreationParamsForStep(step, stepBefore.indoorFloorId, stepAfter.indoorFloorId, flattenedStepIndex, m_colorARGB);
                 }
                 else {
-//                    addLinesForRouteStep(step);
                     addLineCreationParamsForStep(step, flattenedStepIndex);
                 }
                 flattenedStepIndex++;
@@ -129,52 +125,6 @@ public class RouteView {
 
     }
 
-/*
-    private PolylineOptions basePolylineOptions(RouteStep step) {
-        PolylineOptions options = new PolylineOptions()
-            .color(m_colorARGB)
-            .width(m_width)
-            .miterLimit(m_miterLimit);
-
-        if (step.isIndoors) {
-            options.indoor(step.indoorId, step.indoorFloorId);
-        }
-
-        return options;
-    }
-
-    private void addLinesForRouteStep(RouteStep step) {
-        PolylineOptions options = basePolylineOptions(step);
-
-        for (LatLng point: step.path) {
-            options.add(point);
-        }
-
-        Polyline routeLine = m_map.addPolyline(options);
-        m_polylines.add(routeLine);
-    }
-
-    private void addLinesForFloorTransition(RouteStep step, RouteStep stepBefore, RouteStep stepAfter, boolean isActiveStep) {
-        int floorBefore = stepBefore.indoorFloorId;
-        int floorAfter = stepAfter.indoorFloorId;
-        double lineHeight = (floorAfter > floorBefore) ? VERTICAL_LINE_HEIGHT : -VERTICAL_LINE_HEIGHT;
-
-        m_polylines.add(makeVerticalLine(step, floorBefore, lineHeight, isActiveStep));
-        m_polylines.add(makeVerticalLine(step, floorAfter, -lineHeight, isActiveStep));
-    }
-
-    private Polyline makeVerticalLine(RouteStep step, int floor, double height, boolean isActiveStep) {
-        PolylineOptions options = basePolylineOptions(step)
-                .indoor(step.indoorId, floor)
-                .add(step.path.get(0), 0.0)
-                .add(step.path.get(1), height);
-
-        if (isActiveStep) {
-            options.color(m_forwardPathColorARGB);
-        }
-        return m_map.addPolyline(options);
-    }
-*/
     /**
      * Update the progress of turn by turn navigation on route.
      *
@@ -225,34 +175,7 @@ public class RouteView {
         }
         refreshPolylines();
     }
-/*
-    private void addLinesForRouteStep(RouteStep step, int splitIndex, LatLng closestPointOnPath) {
-        List<LatLng> backPathArray = new ArrayList<>(step.path.subList(0, splitIndex+1));
-        backPathArray.add(closestPointOnPath);
-        addLinesForActiveStepSegment(step, backPathArray, false);
 
-        List<LatLng> forwardPathArray = new ArrayList<>();
-        forwardPathArray.add(closestPointOnPath);
-        forwardPathArray.addAll(step.path.subList(splitIndex+1, step.path.size()));
-        addLinesForActiveStepSegment(step, forwardPathArray, true);
-    }
-
-    private void addLinesForActiveStepSegment(RouteStep step, List<LatLng> pathSegment, boolean isForward) {
-        List<LatLng> filteredPathSegment = RouteViewHelper.removeCoincidentPoints(pathSegment);
-        if(filteredPathSegment.size() >= 2) {
-            PolylineOptions basePolylineOptions = basePolylineOptions(step);
-            if(isForward)
-            {
-                basePolylineOptions.color(m_forwardPathColorARGB);
-            }
-            for (LatLng point : filteredPathSegment) {
-                basePolylineOptions.add(point);
-            }
-            Polyline routeLine = m_map.addPolyline(basePolylineOptions);
-            m_polylines.add(routeLine);
-        }
-    }
-*/
     /**
      * Remove this RouteView from the map.
      */

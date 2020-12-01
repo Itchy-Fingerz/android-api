@@ -109,19 +109,10 @@ public class RouteViewAmalgamationHelper {
         }
       }
 
-      List<Pair<LatLng, Double>>pairsList =  RouteViewHelper.removeCoincidentPointsWithElevations(joinedCoordinates, joinedPerPointElevations);
-
-      joinedCoordinates.clear();
-      joinedPerPointElevations.clear();
-
-      for(int i=0; i<pairsList.size(); i++) {
-        Pair<LatLng, Double> pair = pairsList.get(i);
-        joinedCoordinates.add(pair.first);
-        joinedPerPointElevations.add(pair.second);
-      }
+      RouteViewHelper.removeCoincidentPointsWithElevations(joinedCoordinates, joinedPerPointElevations);
 
     } else {
-      joinedCoordinates = RouteViewHelper.removeCoincidentPoints(joinedCoordinates);
+      RouteViewHelper.removeCoincidentPoints(joinedCoordinates);
     }
 
     if (joinedCoordinates.size() > 1) {

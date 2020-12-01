@@ -13,60 +13,6 @@ import java.util.List;
 
 public class RouteViewHelper {
 
-    // TODO: This is incorrect implementation for finding unique coordinates. Update the following logic with something similar to C++ unique
-
-    public static List<LatLng> removeCoincidentPoints(List<LatLng> coordinates) {
-        List<LatLng> uniqueCoordinates = new ArrayList<>();
-
-        for(int i=0; i<coordinates.size(); i++) {
-            LatLng firstLocation = coordinates.get(i);
-            boolean isUnique = true;
-            for(int j=i+1; j<coordinates.size(); j++) {
-                LatLng secondLocation = coordinates.get(j);
-                if (areApproximatelyEqual(firstLocation, secondLocation)) {
-                    isUnique = false;
-                }
-            }
-            if (isUnique) {
-                uniqueCoordinates.add(firstLocation);
-            }
-        }
-        return uniqueCoordinates;
-    }
-
-    // TODO: This is incorrect implementation for finding unique coordinates. Update the following logic with something similar to C++ unique
-
-    public static List<Pair<LatLng, Double>> removeCoincidentPointsWithElevations(List<LatLng> coordinates, List<Double> perPointElevations) {
-
-        assert(coordinates.size() == perPointElevations.size());
-
-        List<Pair<LatLng, Double>> pairsList = new ArrayList<>();
-
-        for(int i=0; i < coordinates.size(); i++) {
-            LatLng coordinate = coordinates.get(i);
-            Double elevation = perPointElevations.get(i);
-            pairsList.add(new Pair<>(coordinate, elevation));
-        }
-
-        List<Pair<LatLng, Double>> uniqueCoordinates = new ArrayList<>();
-
-        for(int i=0; i<pairsList.size(); i++) {
-            Pair<LatLng, Double> firstLocation = pairsList.get(i);
-
-            boolean isUnique = true;
-            for(int j=i+1; j<pairsList.size(); j++) {
-                Pair<LatLng, Double> secondLocation = pairsList.get(j);
-                if (areCoordinateElevationPairApproximatelyEqual(firstLocation, secondLocation)) {
-                    isUnique = false;
-                }
-            }
-            if (isUnique) {
-                uniqueCoordinates.add(firstLocation);
-            }
-        }
-        return uniqueCoordinates;
-    }
-
     public static boolean areApproximatelyEqual(LatLng firstLocation, LatLng secondLocation) {
         final double epsilonSq = 1e-6;
         float[] results = new float[1];
@@ -84,6 +30,41 @@ public class RouteViewHelper {
         return Math.abs(a.second - b.second) < elevationEpsilon;
     }
 
+    public static void removeCoincidentPoints(List<LatLng> coordinates) {
+        if(coordinates == null) {
+            return;
+        }
+
+        for(int i=1; i < coordinates.size(); i++) {
+            if (areApproximatelyEqual(coordinates.get(i), coordinates.get(i-1))) {
+                coordinates.remove(i-1);
+                i--;
+            }
+        }
+    }
+
+    public static void removeCoincidentPointsWithElevations(List<LatLng> coordinates, List<Double> perPointElevations) {
+        assert(coordinates.size() == perPointElevations.size());
+
+        List<Pair<LatLng, Double>> pairsList = new ArrayList<>(coordinates.size());
+
+        for(int i=0; i < coordinates.size(); i++) {
+            LatLng coordinate = coordinates.get(i);
+            Double elevation = perPointElevations.get(i);
+
+            pairsList.add(new Pair<>(coordinate, elevation));
+        }
+
+        for(int i=1; i < pairsList.size(); i++) {
+            if (areCoordinateElevationPairApproximatelyEqual(pairsList.get(i), pairsList.get(i-1))) {
+                pairsList.remove(i-1);
+                coordinates.remove(i-1);
+                perPointElevations.remove(i-1);
+                i--;
+            }
+        }
+    }
+
     public static RoutingPolylineCreateParams  makeNavRoutingPolylineCreateParams(List<LatLng> coordinates, int color, String indoorId, int indoorFloorId) {
         return new RoutingPolylineCreateParams(coordinates, color, indoorId, indoorFloorId, null);
     }
@@ -95,9 +76,9 @@ public class RouteViewHelper {
     public static List<RoutingPolylineCreateParams> createLinesForRouteDirection(RouteStep routeStep, int color) {
         List<RoutingPolylineCreateParams> results = new ArrayList<>();
 
-        List<LatLng> uniqueCoordinates = RouteViewHelper.removeCoincidentPoints(routeStep.path);
-        if(uniqueCoordinates.size() > 1) {
-            RoutingPolylineCreateParams polylineCreateParams = makeNavRoutingPolylineCreateParams(uniqueCoordinates, color, routeStep.indoorId, routeStep.indoorFloorId);
+        RouteViewHelper.removeCoincidentPoints(routeStep.path);
+        if(routeStep.path.size() > 1) {
+            RoutingPolylineCreateParams polylineCreateParams = makeNavRoutingPolylineCreateParams(routeStep.path, color, routeStep.indoorId, routeStep.indoorFloorId);
             results.add(polylineCreateParams);
         }
 
@@ -135,8 +116,8 @@ public class RouteViewHelper {
             //Backward path ends with the split point
             backwardPath.add(closestPointOnPath);
 
-            backwardPath = removeCoincidentPoints(backwardPath);
-            forwardPath = removeCoincidentPoints(forwardPath);
+            removeCoincidentPoints(backwardPath);
+            removeCoincidentPoints(forwardPath);
 
             if(backwardPath.size() > 1) {
                 results.add(makeNavRoutingPolylineCreateParams(backwardPath, backwardColor, routeStep.indoorId, routeStep.indoorFloorId));

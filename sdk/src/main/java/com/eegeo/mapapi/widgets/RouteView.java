@@ -108,7 +108,6 @@ public class RouteView {
 
     private void refreshPolylines() {
         removeFromMap();
-        assert (m_polylines.size() == 0);
 
         List<RoutingPolylineCreateParams> allPolylineCreateParams = new ArrayList<>();
 

@@ -8,10 +8,10 @@ import com.eegeo.mapapi.services.routing.RouteStep;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 
-
-public class RouteViewHelper {
+class RouteViewHelper {
 
     public static boolean areApproximatelyEqual(LatLng firstLocation, LatLng secondLocation) {
         final double epsilonSq = 1e-6;
@@ -35,17 +35,19 @@ public class RouteViewHelper {
             return;
         }
 
-        for(int i=1; i < coordinates.size(); i++) {
-            if (areApproximatelyEqual(coordinates.get(i), coordinates.get(i-1))) {
-                coordinates.remove(i-1);
-                i--;
+        Iterator<LatLng> it = coordinates.iterator();
+        LatLng prev = null;
+        LatLng current = it.next();
+        while (it.hasNext()) {
+            prev = current;
+            current = it.next();
+            if (areApproximatelyEqual(current, prev)) {
+                it.remove();
             }
         }
     }
 
     public static void removeCoincidentPointsWithElevations(List<LatLng> coordinates, List<Double> perPointElevations) {
-        assert(coordinates.size() == perPointElevations.size());
-
         List<Pair<LatLng, Double>> pairsList = new ArrayList<>(coordinates.size());
 
         for(int i=0; i < coordinates.size(); i++) {
@@ -55,12 +57,17 @@ public class RouteViewHelper {
             pairsList.add(new Pair<>(coordinate, elevation));
         }
 
-        for(int i=1; i < pairsList.size(); i++) {
-            if (areCoordinateElevationPairApproximatelyEqual(pairsList.get(i), pairsList.get(i-1))) {
-                pairsList.remove(i-1);
-                coordinates.remove(i-1);
-                perPointElevations.remove(i-1);
-                i--;
+        int i = 1;
+        while (i < pairsList.size()) {
+            Pair<LatLng, Double> prev = pairsList.get(i-1);
+            Pair<LatLng, Double> current = pairsList.get(i);
+
+            if (areCoordinateElevationPairApproximatelyEqual(current, prev)) {
+               pairsList.remove(i-1);
+               coordinates.remove(i-1);
+               perPointElevations.remove(i-1);
+           } else {
+                i++;
             }
         }
     }
@@ -91,9 +98,7 @@ public class RouteViewHelper {
 
         if (hasReachedEnd) {
             return createLinesForRouteDirection(routeStep, backwardColor);
-        }
-        else
-        {
+        } else {
             List<RoutingPolylineCreateParams> results = new ArrayList<>();
 
             int forwardPathSize = coordinatesSize - (splitIndex + 1);
@@ -136,7 +141,6 @@ public class RouteViewHelper {
         float lineHeight = (floorAfter > floorBefore) ? verticalLineHeight : -verticalLineHeight;
 
         int coordinateCount = routeStep.path.size();
-        assert (coordinateCount >= 2): "Can't make a floor transition line with a single point";
 
         List<LatLng> startCoords = new ArrayList<>(2);
         startCoords.add(routeStep.path.get(0));

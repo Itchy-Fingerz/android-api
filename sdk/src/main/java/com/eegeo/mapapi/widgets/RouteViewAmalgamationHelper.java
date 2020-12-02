@@ -8,140 +8,135 @@ import com.eegeo.mapapi.polylines.PolylineOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RouteViewAmalgamationHelper {
+class RouteViewAmalgamationHelper {
 
-  public static List<PolylineOptions> createPolylines(List<RoutingPolylineCreateParams> params, float width, float miterLimit) {
+    public static List<PolylineOptions> createPolylines(List<RoutingPolylineCreateParams> params, float width, float miterLimit) {
+        List<PolylineOptions> result = new ArrayList<>();
+        List<Pair<Integer, Integer>> ranges = RouteViewAmalgamationHelper.buildAmalgamationRanges(params);
 
-    List<PolylineOptions> result = new ArrayList<>();
-    List<Pair<Integer, Integer>> ranges = RouteViewAmalgamationHelper.buildAmalgamationRanges(params);
-
-    for (Pair<Integer, Integer> range : ranges) {
-      PolylineOptions polylineOption = RouteViewAmalgamationHelper.createAmalgamatedPolylineForRange(params, range.first, range.second, width, miterLimit);
-      if (polylineOption != null) {
-        result.add(polylineOption);
-      }
-    }
-    return result;
-  }
-
-
-  public static List<Pair<Integer, Integer>> buildAmalgamationRanges(List<RoutingPolylineCreateParams> polylineCreateParams) {
-
-    List<Pair<Integer, Integer>> ranges = new ArrayList<>();
-
-    if (polylineCreateParams.isEmpty()) {
-      return ranges;
+        for (Pair<Integer, Integer> range : ranges) {
+            // TODO: Pass an out param instead of taking PolylineOptions as an output. Return a boolean as an output. Remove null check and add boolean check.
+            PolylineOptions polylineOption = RouteViewAmalgamationHelper.createAmalgamatedPolylineForRange(params, range.first, range.second, width, miterLimit);
+            if (polylineOption != null) {
+                result.add(polylineOption);
+            }
+        }
+        return result;
     }
 
-    int rangeStart = 0;
-    for (int i = 1; i < polylineCreateParams.size(); ++i) {
-      RoutingPolylineCreateParams a = polylineCreateParams.get(i - 1);
-      RoutingPolylineCreateParams b = polylineCreateParams.get(i);
 
-      if (!RouteViewAmalgamationHelper.canAmalgamate(a, b)) {
-        ranges.add(new Pair<>(rangeStart, i));
-        rangeStart = i;
-      }
-    }
-    ranges.add(new Pair<>(rangeStart, polylineCreateParams.size()));
+    public static List<Pair<Integer, Integer>> buildAmalgamationRanges(List<RoutingPolylineCreateParams> polylineCreateParams) {
+        List<Pair<Integer, Integer>> ranges = new ArrayList<>();
 
-    return ranges;
+        if (polylineCreateParams.isEmpty()) {
+            return ranges;
+        }
 
-  }
+        int rangeStart = 0;
+        for (int i = 1; i < polylineCreateParams.size(); ++i) {
+            RoutingPolylineCreateParams a = polylineCreateParams.get(i - 1);
+            RoutingPolylineCreateParams b = polylineCreateParams.get(i);
 
-  public static boolean canAmalgamate(RoutingPolylineCreateParams a, RoutingPolylineCreateParams b) {
+            if (!RouteViewAmalgamationHelper.canAmalgamate(a, b)) {
+                ranges.add(new Pair<>(rangeStart, i));
+                rangeStart = i;
+            }
+        }
+        ranges.add(new Pair<>(rangeStart, polylineCreateParams.size()));
 
-    if (a.isIndoor != b.isIndoor) {
-      return false;
-    }
+        return ranges;
 
-    if (!a.indoorMapId.equals(b.indoorMapId)) {
-      return false;
     }
 
-    if (a.indoorFloorId != b.indoorFloorId) {
-      return false;
+    public static boolean canAmalgamate(RoutingPolylineCreateParams a, RoutingPolylineCreateParams b) {
+        if (a.isIndoor != b.isIndoor) {
+            return false;
+        }
+
+        if (!a.indoorMapId.equals(b.indoorMapId)) {
+            return false;
+        }
+
+        if (a.indoorFloorId != b.indoorFloorId) {
+            return false;
+        }
+
+        if (a.color != b.color) {
+            return false;
+        }
+
+        return true;
     }
 
-    if (a.color != b.color) {
-      return false;
-    }
 
-    return true;
-  }
+    public static PolylineOptions createAmalgamatedPolylineForRange(List<RoutingPolylineCreateParams> polylineCreateParams, Integer rangeStartIndex, Integer rangeEndIndex, float width, float miterLimit) {
+        List<LatLng> joinedCoordinates = new ArrayList<>();
+        List<Double> joinedPerPointElevations = new ArrayList<>();
 
+        boolean anyPerPointElevations = false;
 
-  public static PolylineOptions createAmalgamatedPolylineForRange(List<RoutingPolylineCreateParams> polylineCreateParams, Integer rangeStartIndex, Integer rangeEndIndex, float width, float miterLimit) {
-    assert (rangeStartIndex < rangeEndIndex);
-    assert (rangeStartIndex >= 0);
-    assert (rangeEndIndex <= polylineCreateParams.size());
+        for (int i = rangeStartIndex; i < rangeEndIndex; ++i) {
+            RoutingPolylineCreateParams params = polylineCreateParams.get(i);
+            List<LatLng> coordinates = params.path;
 
-    List<LatLng> joinedCoordinates = new ArrayList<>();
-    List<Double> joinedPerPointElevations = new ArrayList<>();
+            joinedCoordinates.addAll(coordinates);
 
-    boolean anyPerPointElevations = false;
+            if (params.perPointElevations != null) {
+                anyPerPointElevations = true;
+            }
+        }
 
-    for (int i = rangeStartIndex; i < rangeEndIndex; ++i) {
-      RoutingPolylineCreateParams params = polylineCreateParams.get(i);
-      List<LatLng> coordinates = params.path;
+        if (anyPerPointElevations) {
 
-      joinedCoordinates.addAll(coordinates);
+            for (int i = rangeStartIndex; i < rangeEndIndex; ++i) {
+                RoutingPolylineCreateParams params = polylineCreateParams.get(i);
+                List<Double> perPointElevations = params.perPointElevations;
 
-      if (params.perPointElevations != null) {
-        anyPerPointElevations = true;
-      }
-    }
+                if(perPointElevations == null) {
 
-    if (anyPerPointElevations) {
+                    for(int x = 0; x < params.path.size(); x++) {
+                        joinedPerPointElevations.add(0.0);
+                    }
 
-      for (int i = rangeStartIndex; i < rangeEndIndex; ++i) {
-        RoutingPolylineCreateParams params = polylineCreateParams.get(i);
-        List<Double> perPointElevations = params.perPointElevations;
+                } else {
+                    joinedPerPointElevations.addAll(params.perPointElevations);
+                }
+            }
 
-        if(perPointElevations == null) {
-
-          for(int x = 0; x < params.path.size(); x++) {
-            joinedPerPointElevations.add(0.0);
-          }
+            RouteViewHelper.removeCoincidentPointsWithElevations(joinedCoordinates, joinedPerPointElevations);
 
         } else {
-          joinedPerPointElevations.addAll(params.perPointElevations);
+            RouteViewHelper.removeCoincidentPoints(joinedCoordinates);
         }
-      }
 
-      RouteViewHelper.removeCoincidentPointsWithElevations(joinedCoordinates, joinedPerPointElevations);
+        if (joinedCoordinates.size() > 1) {
 
-    } else {
-      RouteViewHelper.removeCoincidentPoints(joinedCoordinates);
-    }
+            RoutingPolylineCreateParams param = polylineCreateParams.get(rangeStartIndex);
 
-    if (joinedCoordinates.size() > 1) {
+            PolylineOptions options = new PolylineOptions()
+                    .color(param.color)
+                    .width(width)
+                    .miterLimit(miterLimit);
 
-      RoutingPolylineCreateParams param = polylineCreateParams.get(rangeStartIndex);
+            if (param.isIndoor) {
+                options.indoor(param.indoorMapId, param.indoorFloorId);
+            }
 
-      PolylineOptions options = new PolylineOptions()
-              .color(param.color)
-              .width(width)
-              .miterLimit(miterLimit);
+            for(int i=0; i<joinedCoordinates.size(); i++) {
+                LatLng point = joinedCoordinates.get(i);
 
-      if (param.isIndoor) {
-        options.indoor(param.indoorMapId, param.indoorFloorId);
-      }
+                if(anyPerPointElevations) {
+                    Double elevation = joinedPerPointElevations.get(i);
+                    options.add(point, elevation);
+                } else {
+                    options.add(point);
+                }
+            }
 
-      for(int i=0; i<joinedCoordinates.size(); i++) {
-        LatLng point = joinedCoordinates.get(i);
-        if(anyPerPointElevations) {
-          Double elevation = joinedPerPointElevations.get(i);
-          options.add(point, elevation);
-        } else {
-          options.add(point);
+            return options;
         }
-      }
 
-      return options;
+        return null;
     }
-
-    return null;
-  }
 }
 
